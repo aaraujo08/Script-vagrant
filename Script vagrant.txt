@@ -1,0 +1,35 @@
+# -- mode: ruby --
+# vi: set ft=ruby  :
+
+$install_packages = <<-EOF
+sudo apt update
+sudo apt dist-upgrade -y
+sudo apt install apache2 -y
+EOF
+
+
+
+machines = {
+  "ubu18srv" => {"memory" => "512", "cpu" => "1", "ip" => "20", "image" => "generic/ubuntu1804"},
+  "cent7srv" => {"memory" => "1024", "cpu" => "1", "ip" => "30", "image" => "generic/centos7"},
+  "win10dsk" => {"memory" => "2048", "cpu" => "2", "ip" => "10", "image" => "gusztavvargadr/visual-studio"}
+}
+
+Vagrant.configure("2") do |config|
+
+  machines.each do |name, conf|
+    config.vm.define "#{name}" do |machine|
+      machine.vm.box = "#{conf["image"]}"
+      machine.vm.hostname = "#{name}.lab"
+      machine.vm.network "private_network", ip: "10.0.0.#{conf["ip"]}"
+      machine.vm.provider "virtualbox" do |vb|
+        vb.name = "#{name}"
+        vb.memory = conf["memory"]
+        vb.cpus = conf["cpu"]
+      end
+      if "#{conf["image"]}" == "centos/7"
+        machine.vm.provision "shell", inline: $install_packages  
+      end
+    end
+  end
+end
